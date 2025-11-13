@@ -7,6 +7,9 @@ from google import genai
 from google.genai import types
 import traceback
 import base64
+from typing import List
+from config.supabase_client import supabase
+import requests
 
 load_dotenv()
 
@@ -27,7 +30,8 @@ async def try_on(
     background_color: str = Form(...),
     foreground_color: str = Form(...),
     instructions: str = Form(""),
-   
+    furniture_ids: str = Form(""),
+
 ):
     try:
         
@@ -50,9 +54,36 @@ async def try_on(
         size_in_mb_for_place_image = len(place_bytes) / (1024 * 1024)
         if size_in_mb_for_place_image > MAX_IMAGE_SIZE_MB:
             raise HTTPException(status_code=400, detail="Image exceeds 10MB size limit for place_image")
-        
-       
+
+
         place_b64 = array_buffer_to_base64(place_bytes)
+
+        furniture_info = ""
+        furniture_parts = []
+
+        if furniture_ids:
+            ids_list = [fid.strip() for fid in furniture_ids.split(",") if fid.strip()]
+
+            if ids_list:
+                furniture_response = supabase.table("furniture_items").select("*").in_("id", ids_list).execute()
+
+                if furniture_response.data:
+                    furniture_info = "\n\n### User's Furniture to Include:\n"
+
+                    for idx, furniture in enumerate(furniture_response.data):
+                        furniture_info += f"{idx + 1}. **{furniture['name']}** (Category: {furniture['category']})\n"
+
+                        try:
+                            img_response = requests.get(furniture['image_url'], timeout=10)
+                            if img_response.status_code == 200:
+                                furniture_parts.append(
+                                    types.Part.from_bytes(
+                                        data=img_response.content,
+                                        mime_type="image/jpeg"
+                                    )
+                                )
+                        except Exception as img_err:
+                            print(f"Failed to fetch furniture image: {img_err}")
 
         prompt = f"""
         You are a professional AI interior and exterior designer.
@@ -65,6 +96,7 @@ async def try_on(
         - **Background Color Preference:** {background_color}
         - **Foreground Color Preference:** {foreground_color}
         - **Instructions:** {instructions}
+        {furniture_info}
 
         ### Objective:
         1. Apply the chosen design style (e.g., {style}) to the uploaded {room_type}.
@@ -78,6 +110,7 @@ async def try_on(
         9. Return the cost of design and the the in depth description of the design.
         10. Return all colors of the design in hex format.
         11. Return cost of the design in USD.
+        12. **IMPORTANT**: If user furniture images are provided, naturally integrate them into the redesigned space. Place them appropriately based on their category and the room layout. Make sure they blend seamlessly with the overall design aesthetic.
 
         Return:
         - A realistic redesigned image of the space.
@@ -94,8 +127,10 @@ async def try_on(
                 data=place_bytes,
                 mime_type= place_image.content_type,
             )
-        ]        
-        
+        ]
+
+        contents.extend(furniture_parts)
+
         response = client.models.generate_content(
             model="gemini-2.0-flash-preview-image-generation",
             contents=contents,
