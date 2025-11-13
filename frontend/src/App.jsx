@@ -146,26 +146,6 @@ return (
             AI Interior / Exterior Makeover
           </Title>
 
-          {/* FURNITURE SECTION */}
-          <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-            <Col xs={24} md={12}>
-              <FurnitureUpload
-                isDarkMode={isDarkMode}
-                onFurnitureUploaded={handleFurnitureUploaded}
-              />
-            </Col>
-            <Col xs={24} md={12}>
-              <FurnitureLibrary
-                key={furnitureRefresh}
-                isDarkMode={isDarkMode}
-                selectedFurniture={selectedFurniture}
-                onSelectionChange={setSelectedFurniture}
-              />
-            </Col>
-          </Row>
-
-          <Divider />
-
           {/* FORM */}
           <form onSubmit={handleSubmit}>
             <Row gutter={[24, 24]} justify="center" style={{ flexWrap: "wrap" }}>
@@ -260,6 +240,26 @@ return (
                 </div>
               </Col>
             </Row>
+
+          <Divider />
+            
+          {/* FURNITURE SECTION */}
+          <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
+            <Col xs={24} md={12}>
+              <FurnitureUpload
+                isDarkMode={isDarkMode}
+                onFurnitureUploaded={handleFurnitureUploaded}
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <FurnitureLibrary
+                key={furnitureRefresh}
+                isDarkMode={isDarkMode}
+                selectedFurniture={selectedFurniture}
+                onSelectionChange={setSelectedFurniture}
+              />
+            </Col>
+          </Row>
 
             <div style={{ marginTop: 32 }}>
               <Text style={{ color: textColor }}>Additional Instructions</Text>
