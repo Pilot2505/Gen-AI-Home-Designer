@@ -8,7 +8,6 @@ import {
   Button,
   Typography,
   Switch,
-  Layout,
   ConfigProvider,
   theme,
   Row,
@@ -20,7 +19,6 @@ import ImageUpload from "./components/ImageUpload";
 import MarkdownCard from "./components/MarkdownCard";
 import ReactMarkdown from "react-markdown";
 
-const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -106,35 +104,19 @@ return (
       },
     }}
   >
-    <Layout style={{ minHeight: "100vh", background: isDarkMode ? "#0f0f0f" : "#f9fafb" }}>
-      <Header
-        style={{
-          background: "transparent",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "1.5rem 1rem",
-          flexWrap: "wrap",
-        }}
-      >
-        <Title level={3} style={{ margin: 0, color: textColor, fontSize: "1.5rem", flex: 1 }}>
-          🏡 Virtual Home Designer
-        </Title>
-        <div style={{ marginLeft: "auto" }}>
-          <Switch
-            checked={isDarkMode}
-            onChange={setIsDarkMode}
-            checkedChildren={<BulbFilled />}
-            unCheckedChildren={<BulbOutlined />}
-          />
-        </div>
-      </Header>
-
-      <Content style={{ padding: "2rem 1rem" }}>
+    <div style={{ minHeight: "100vh", background: isDarkMode ? "#0f0f0f" : "#f9fafb", padding: "2rem 1rem" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
-          <Title level={2} style={{ color: textColor, textAlign: "center", marginBottom: "2rem" }}>
-            AI Interior / Exterior Makeover
-          </Title>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+            <Title level={2} style={{ color: textColor, margin: 0 }}>
+              AI Interior / Exterior Makeover
+            </Title>
+            <Switch
+              checked={isDarkMode}
+              onChange={setIsDarkMode}
+              checkedChildren={<BulbFilled />}
+              unCheckedChildren={<BulbOutlined />}
+            />
+          </div>
 
           {/* FORM */}
           <form onSubmit={handleSubmit}>
@@ -339,10 +321,9 @@ return (
             </div>
           )}
         </div>
-      </Content>
 
       <ToastContainer theme={isDarkMode ? "dark" : "light"} />
-    </Layout>
+    </div>
   </ConfigProvider>
 );
 

@@ -10,6 +10,7 @@ import base64
 from typing import List
 from config.supabase_client import supabase
 import requests
+import uuid
 
 load_dotenv()
 
@@ -167,16 +168,71 @@ async def try_on(
             print("No candidates found in the API response.")
 
         image_url = None
+        generated_image_storage_url = None
+        original_image_storage_url = None
+
         if image_data:
             image_base64 = base64.b64encode(image_data).decode("utf-8")
             image_url = f"data:{image_mime_type};base64,{image_base64}"
+
+            # Store original image to Supabase storage
+            try:
+                original_ext = place_image.filename.split(".")[-1] if place_image.filename else "jpg"
+                original_filename = f"original_{uuid.uuid4()}.{original_ext}"
+                original_path = f"room-designs/originals/{original_filename}"
+
+                supabase.storage.from_("room-images").upload(
+                    path=original_path,
+                    file=place_bytes,
+                    file_options={"content-type": place_image.content_type}
+                )
+                original_image_storage_url = supabase.storage.from_("room-images").get_public_url(original_path)
+            except Exception as storage_err:
+                print(f"Failed to store original image: {storage_err}")
+
+            # Store generated image to Supabase storage
+            try:
+                generated_filename = f"generated_{uuid.uuid4()}.png"
+                generated_path = f"room-designs/generated/{generated_filename}"
+
+                supabase.storage.from_("room-images").upload(
+                    path=generated_path,
+                    file=image_data,
+                    file_options={"content-type": image_mime_type}
+                )
+                generated_image_storage_url = supabase.storage.from_("room-images").get_public_url(generated_path)
+            except Exception as storage_err:
+                print(f"Failed to store generated image: {storage_err}")
         else:
             image_url = None
-    
+
+        # Save to database if we have both URLs
+        design_id = None
+        if original_image_storage_url and generated_image_storage_url:
+            try:
+                db_response = supabase.table("room_designs").insert({
+                    "original_image_url": original_image_storage_url,
+                    "generated_image_url": generated_image_storage_url,
+                    "design_type": design_type,
+                    "room_type": room_type,
+                    "style": style,
+                    "background_color": background_color,
+                    "foreground_color": foreground_color,
+                    "instructions": instructions,
+                    "description": text_response
+                }).execute()
+
+                if db_response.data:
+                    design_id = db_response.data[0]["id"]
+            except Exception as db_err:
+                print(f"Failed to save to database: {db_err}")
+
         return JSONResponse(
         content={
             "image": image_url,
             "text": text_response,
+            "design_id": design_id,
+            "generated_image_url": generated_image_storage_url
         }
         )
 
