@@ -18,8 +18,6 @@ import {
 import { BulbFilled, BulbOutlined } from "@ant-design/icons";
 import ImageUpload from "./components/ImageUpload";
 import MarkdownCard from "./components/MarkdownCard";
-import FurnitureUpload from "./components/FurnitureUpload";
-import FurnitureLibrary from "./components/FurnitureLibrary";
 import ReactMarkdown from "react-markdown";
 
 const { Header, Content } = Layout;
@@ -35,8 +33,6 @@ function App() {
   const [style, setStyle] = useState("");
   const [history, setHistory] = useState([]);
   const [instructions, setInstructions] = useState("");
-  const [selectedFurniture, setSelectedFurniture] = useState([]);
-  const [furnitureRefresh, setFurnitureRefresh] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
@@ -73,7 +69,6 @@ function App() {
     formData.append("room_type", roomType);
     formData.append("style", style);
     formData.append("instructions", instructions);
-    formData.append("furniture_ids", selectedFurniture.join(","));
 
     try {
      const response = await axios.post("http://127.0.0.1:8000/api/try-on", formData, {
@@ -98,11 +93,6 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFurnitureUploaded = (newFurniture) => {
-    setFurnitureRefresh((prev) => prev + 1);
-    toast.success(`${newFurniture.name} added to library!`);
   };
 
   const textColor = isDarkMode ? "#e4e4e4" : "#111827";
@@ -240,26 +230,6 @@ return (
                 </div>
               </Col>
             </Row>
-
-          <Divider />
-            
-          {/* FURNITURE SECTION */}
-          <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-            <Col xs={24} md={12}>
-              <FurnitureUpload
-                isDarkMode={isDarkMode}
-                onFurnitureUploaded={handleFurnitureUploaded}
-              />
-            </Col>
-            <Col xs={24} md={12}>
-              <FurnitureLibrary
-                key={furnitureRefresh}
-                isDarkMode={isDarkMode}
-                selectedFurniture={selectedFurniture}
-                onSelectionChange={setSelectedFurniture}
-              />
-            </Col>
-          </Row>
 
             <div style={{ marginTop: 32 }}>
               <Text style={{ color: textColor }}>Additional Instructions</Text>
